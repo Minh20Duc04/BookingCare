@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,23 +34,14 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
                 .map(String::toUpperCase)
                 .map(DayOfWeek::valueOf)
                 .collect(Collectors.toSet());
-
-
-        DoctorRequest doctorRequest =  DoctorRequest.builder()
-                .startTime(doctorRequestDto.getStartTime())
-                .endTime(doctorRequestDto.getEndTime())
-                .status(Status.PENDING)
-                .user(user)
-                .specialty(specialty)
-                .department(department)
-                .daysOfWeek(days)
-                .build();
-
-        DoctorRequest savedDocRequest = doctorRequestRepository.save(doctorRequest);
-
-        doctorRequestDto.setStatus(savedDocRequest.getStatus().name());
-        doctorRequestDto.setId(savedDocRequest.getId());
         return doctorRequestDto;
+    }
+
+    @Override
+    public List<DoctorRequestDto> getAllDoctorRequests() {
+        List<DoctorRequest> doctorRequests = doctorRequestRepository.findAll();
+        List<DoctorRequestDto> doctorRequestDtos = doctorRequests.stream().map(this::docRequestToDto).collect(Collectors.toList());
+        return doctorRequestDtos;
     }
 
 
@@ -78,6 +70,10 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
 
     }
 
+
+    private DoctorRequestDto docRequestToDto(DoctorRequest doctorRequest){
+        return new DoctorRequestDto(doctorRequest.getId(), doctorRequest.getStatus().name(), doctorRequest.getSpecialty().name(), doctorRequest.getDaysOfWeek().stream().map(DayOfWeek::name).collect(Collectors.toList()), doctorRequest.getDepartment().getId(), doctorRequest.getStartTime(), doctorRequest.getEndTime());
+    }
 
 
 
