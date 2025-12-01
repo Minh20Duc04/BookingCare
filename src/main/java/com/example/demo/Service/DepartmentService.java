@@ -1,6 +1,7 @@
 package com.example.demo.Service;
 
 
+import com.example.demo.Dto.DoctorDecisionDto;
 import com.example.demo.Model.Department;
 
 public interface DepartmentService {

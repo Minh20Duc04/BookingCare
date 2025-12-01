@@ -1,6 +1,7 @@
 package com.example.demo.Service;
 
-public interface DoctorService {
-    String decideDoctorRequest(Long doctorRequestId, String status);
+import com.example.demo.Dto.DoctorDecisionDto;
 
+public interface DoctorService {
+    String decideDoctorRequest(DoctorDecisionDto decisionDto);
 }

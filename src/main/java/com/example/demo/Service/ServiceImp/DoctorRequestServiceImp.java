@@ -1,5 +1,6 @@
 package com.example.demo.Service.ServiceImp;
 
+import com.cloudinary.utils.ObjectUtils;
 import com.example.demo.Dto.DoctorRequestDto;
 import com.example.demo.Model.*;
 import com.example.demo.Repository.DepartmentRepository;
@@ -7,9 +8,13 @@ import com.example.demo.Repository.DoctorRequestRepository;
 import com.example.demo.Service.DoctorRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import com.cloudinary.Cloudinary;
 
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,13 +24,18 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
 
     private final DoctorRequestRepository doctorRequestRepository;
     private final DepartmentRepository departmentRepository;
+    private final Cloudinary cloudinary;
+
+
 
 
     @Override
-    public DoctorRequestDto createDoctorRequest(DoctorRequestDto doctorRequestDto, User user) {
+    public DoctorRequestDto createDoctorRequest(DoctorRequestDto doctorRequestDto, User user, MultipartFile file) {
         validateRequest(doctorRequestDto);
 
-        Specialty specialty = Specialty.valueOf(doctorRequestDto.getSpecialty().toUpperCase());
+        System.out.println("Specialty received: '" + doctorRequestDto.getSpecialty() + "'");
+        String sp = doctorRequestDto.getSpecialty().trim().toUpperCase();
+        Specialty specialty = Specialty.valueOf(sp);
 
         Department department = departmentRepository.findById(doctorRequestDto.getDepartmentId()).orElseThrow(()-> new IllegalArgumentException("This Department not exist"));
 
@@ -34,6 +44,24 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
                 .map(String::toUpperCase)
                 .map(DayOfWeek::valueOf)
                 .collect(Collectors.toSet());
+
+        String imageUrl = uploadFile(file);
+
+        DoctorRequest doctorRequest =  DoctorRequest.builder()
+                .startTime(doctorRequestDto.getStartTime())
+                .endTime(doctorRequestDto.getEndTime())
+                .status(Status.PENDING)
+                .user(user)
+                .specialty(specialty)
+                .department(department)
+                .daysOfWeek(days)
+                .imageUrl(imageUrl)
+                .build();
+
+        DoctorRequest savedDocRequest = doctorRequestRepository.save(doctorRequest);
+
+        doctorRequestDto.setStatus(savedDocRequest.getStatus().name());
+        doctorRequestDto.setId(savedDocRequest.getId());
         return doctorRequestDto;
     }
 
@@ -46,8 +74,9 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
 
 
     private void validateRequest(DoctorRequestDto doctorRequestDto){
+        String sp = doctorRequestDto.getSpecialty().trim().toUpperCase();
         try {
-            Specialty.valueOf(doctorRequestDto.getSpecialty().toUpperCase());
+            Specialty.valueOf(sp);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid specialty: " + doctorRequestDto.getSpecialty());
         }
@@ -60,7 +89,7 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
             }
         }
 
-        if(doctorRequestDto.getStartTime() == null || doctorRequestDto.getEndTime() == null) {
+        if(doctorRequestDto.getStartTime() == null || doctorRequestDto.getEndTime() == null){
             throw new IllegalArgumentException("Start time and end time cannot be null");
         }
 
@@ -75,6 +104,14 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
         return new DoctorRequestDto(doctorRequest.getId(), doctorRequest.getStatus().name(), doctorRequest.getSpecialty().name(), doctorRequest.getDaysOfWeek().stream().map(DayOfWeek::name).collect(Collectors.toList()), doctorRequest.getDepartment().getId(), doctorRequest.getStartTime(), doctorRequest.getEndTime());
     }
 
+    private String uploadFile(MultipartFile file){
+        try{
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap("resource_type", "auto"));
+            return uploadResult.get("secure_url").toString();
+        }catch (IOException e){
+            throw new RuntimeException("Lỗi khi upload file: " + e.getMessage());
+        }
+    }
 
 
 
