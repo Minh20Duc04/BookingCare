@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/patient")
 public class PatientController {
 
-    @PostMapping("/convert")
-    public ResponseEntity<String> convert(){
-
-    }
+//    @PostMapping("/convert")
+//    public ResponseEntity<String> convert(){
+//
+//    }
 }

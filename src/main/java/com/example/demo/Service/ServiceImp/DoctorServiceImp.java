@@ -1,16 +1,17 @@
 package com.example.demo.Service.ServiceImp;
 
 import com.example.demo.Dto.DoctorDecisionDto;
+import com.example.demo.Dto.DoctorRequestDto;
 import com.example.demo.Model.*;
-import com.example.demo.Repository.DoctorRepository;
-import com.example.demo.Repository.DoctorRequestRepository;
-import com.example.demo.Repository.ScheduleRepository;
-import com.example.demo.Repository.UserRepository;
+import com.example.demo.Repository.*;
 import com.example.demo.Service.DoctorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -22,7 +23,7 @@ public class DoctorServiceImp implements DoctorService {
     private final DoctorRequestRepository doctorRequestRepository;
     private final ScheduleRepository scheduleRepository;
     private final UserRepository userRepository;
-
+    private final DepartmentRepository departmentRepository;
 
     @Override
     public String decideDoctorRequest(DoctorDecisionDto decisionDto){
@@ -79,8 +80,64 @@ public class DoctorServiceImp implements DoctorService {
     }
 
     @Override
-    public Doctor findByDoctorName(String name) {
+    public Doctor findByDoctorName(String name) {//tim theo ten, tim theo chuyen khoa, sua lai kieu tra ve
         Doctor docDB = doctorRepository.findByFullName(name).orElseThrow(()-> new IllegalArgumentException("Can not find doctor by "+name));
         return docDB;
     }
+
+
+    @Override
+    public String updateDoctor(Long doctorId, DoctorRequestDto doctorRequestDto){
+        Doctor docDB = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor with this id not found: " + doctorId));
+
+        Department department = departmentRepository.findById(doctorRequestDto.getDepartmentId())
+                .orElseThrow(() -> new RuntimeException("Department not found"));
+
+        Schedule sche = scheduleRepository.findById(docDB.getId())
+                .orElseThrow(() -> new RuntimeException("Schedule not found"));
+
+        if (doctorRequestDto.getSpecialty() != null) {
+            String sp = doctorRequestDto.getSpecialty().trim().toUpperCase();
+            try {
+                docDB.setSpecialty(Specialty.valueOf(sp));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid specialty: " + doctorRequestDto.getSpecialty());
+            }
+        }
+
+        if (doctorRequestDto.getDaysOfWeek() != null) {
+            Set<DayOfWeek> days = doctorRequestDto.getDaysOfWeek().stream()
+                    .map(String::toUpperCase)
+                    .map(day -> {
+                        try {
+                            return DayOfWeek.valueOf(day);
+                        } catch (IllegalArgumentException e) {
+                            throw new IllegalArgumentException("Invalid day of week: " + day);
+                        }
+                    })
+                    .collect(Collectors.toSet());
+
+            sche.setDaysOfWeek(days);
+        }
+
+        if (doctorRequestDto.getDepartmentId() != null) {
+            docDB.setDepartment(department);
+        }
+
+        if (doctorRequestDto.getStartTime() != null && doctorRequestDto.getEndTime() != null) {
+            if (doctorRequestDto.getStartTime().isAfter(doctorRequestDto.getEndTime())) {
+                throw new IllegalArgumentException("Start time must be before end time");
+            }
+            sche.setStartTime(doctorRequestDto.getStartTime());
+            sche.setEndTime(doctorRequestDto.getEndTime());
+        }
+
+        doctorRepository.save(docDB);
+        sche.setDoctor(docDB);
+        scheduleRepository.save(sche);
+
+        return "Update doctor successfully";
+    }
+
 }

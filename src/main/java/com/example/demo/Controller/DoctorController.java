@@ -63,4 +63,9 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.findByDoctorName(name));
     }
 
+    @PutMapping("/update/{doctorId}")
+    public ResponseEntity<String> updateDoctor(@RequestBody DoctorRequestDto doctorRequestDto, @PathVariable(name = "doctorId") Long doctorId){
+        return ResponseEntity.ok(doctorService.updateDoctor(doctorId, doctorRequestDto));
+    }
+
 }

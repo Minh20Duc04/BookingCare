@@ -35,7 +35,10 @@ public class SecurityConfig {
                         .requestMatchers("/doctor/request").hasRole("USER")
                         .requestMatchers(
                                 "/doctor/get-all-requests",
-                                "/doctor/decide-request"
+                                "/doctor/decide-request",
+                                "/doctor/update/**",
+                                "/department/createDepartment",
+                                "/appointment/available-slots"
                         ).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

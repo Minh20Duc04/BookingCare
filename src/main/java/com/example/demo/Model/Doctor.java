@@ -53,4 +53,6 @@ public class Doctor {
     @JsonIgnore
     private List<Schedule> scheduleList;
 
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "doctor")
+    private List<Appointment> appointments;
 }
