@@ -2,6 +2,7 @@ package com.example.demo.Controller;
 
 import com.example.demo.Dto.DoctorDecisionDto;
 import com.example.demo.Dto.DoctorRequestDto;
+import com.example.demo.Model.Doctor;
 import com.example.demo.Model.User;
 import com.example.demo.Service.DoctorRequestService;
 import com.example.demo.Service.DoctorService;
@@ -55,6 +56,11 @@ public class DoctorController {
     @PutMapping("/decide-request")
     public ResponseEntity<String> decideDoctorRequest(@RequestBody DoctorDecisionDto decisionDto){
         return ResponseEntity.ok(doctorService.decideDoctorRequest(decisionDto));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Doctor> findByDoctorName(@RequestParam String name){
+        return ResponseEntity.ok(doctorService.findByDoctorName(name));
     }
 
 }

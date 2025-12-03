@@ -77,4 +77,10 @@ public class DoctorServiceImp implements DoctorService {
             return "Doctor request rejected.";
         }
     }
+
+    @Override
+    public Doctor findByDoctorName(String name) {
+        Doctor docDB = doctorRepository.findByFullName(name).orElseThrow(()-> new IllegalArgumentException("Can not find doctor by "+name));
+        return docDB;
+    }
 }
