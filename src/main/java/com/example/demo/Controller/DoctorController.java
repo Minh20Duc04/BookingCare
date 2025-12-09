@@ -1,6 +1,7 @@
 package com.example.demo.Controller;
 
 import com.example.demo.Dto.DoctorDecisionDto;
+import com.example.demo.Dto.DoctorDto;
 import com.example.demo.Dto.DoctorRequestDto;
 import com.example.demo.Model.Doctor;
 import com.example.demo.Model.User;
@@ -32,6 +33,8 @@ public class DoctorController {
             @RequestParam Long departmentId,
             @RequestParam String startTime,
             @RequestParam String endTime,
+            @RequestParam Double fee,
+            @RequestParam String description,
             @RequestParam MultipartFile file,
             Authentication authentication) {
 
@@ -40,6 +43,8 @@ public class DoctorController {
                 .specialty(specialty)
                 .daysOfWeek(daysOfWeek)
                 .departmentId(departmentId)
+                .fee(fee)
+                .description(description)
                 .startTime(LocalTime.parse(startTime.replace("\"", "")))
                 .endTime(LocalTime.parse(endTime.replace("\"", "")))
                 .build();
@@ -59,8 +64,8 @@ public class DoctorController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Doctor> findByDoctorName(@RequestParam String name){
-        return ResponseEntity.ok(doctorService.findByDoctorName(name));
+    public ResponseEntity<List<DoctorDto>> findByDoctorNameOrSpecialty(@RequestParam(required = false) String name, @RequestParam(required = false) String specialty, @RequestParam(defaultValue = "0") String page){
+        return ResponseEntity.ok(doctorService.findByDoctorNameOrSpecialty(name, specialty, page));
     }
 
     @PutMapping("/update/{doctorId}")

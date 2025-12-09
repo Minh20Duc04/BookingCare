@@ -1,15 +1,20 @@
 package com.example.demo.Service.ServiceImp;
 
 import com.example.demo.Dto.DoctorDecisionDto;
+import com.example.demo.Dto.DoctorDto;
 import com.example.demo.Dto.DoctorRequestDto;
 import com.example.demo.Model.*;
 import com.example.demo.Repository.*;
 import com.example.demo.Service.DoctorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,6 +52,8 @@ public class DoctorServiceImp implements DoctorService {
                     .role(Role.DOCTOR)
                     .department(doctorRequest.getDepartment())
                     .user(doctorRequest.getUser())
+                    .fee(doctorRequest.getFee())
+                    .description(doctorRequest.getDescription())
                     .imageUrl(doctorRequest.getImageUrl())
                     .build();
             doctorRepository.save(createDoctor);
@@ -80,9 +87,25 @@ public class DoctorServiceImp implements DoctorService {
     }
 
     @Override
-    public Doctor findByDoctorName(String name) {//tim theo ten, tim theo chuyen khoa, sua lai kieu tra ve
-        Doctor docDB = doctorRepository.findByFullName(name).orElseThrow(()-> new IllegalArgumentException("Can not find doctor by "+name));
-        return docDB;
+    public List<DoctorDto> findByDoctorNameOrSpecialty(String name, String specialty, String page) {
+        if(name != null && !name.trim().toLowerCase().isEmpty()){
+            name = name.trim().toLowerCase();
+        }else {
+            name = null;
+        }
+        if(specialty != null && !specialty.trim().isEmpty()){
+            try {
+                Specialty.valueOf(specialty);
+                specialty = specialty.trim().toUpperCase();
+            }catch (IllegalArgumentException e){
+                specialty = null;
+            }
+        }
+        Pageable pageable = PageRequest.of(Integer.parseInt(page), 10, Sort.by("fullName").ascending());
+
+        List<Doctor> doctors = doctorRepository.searchDoctors(name,specialty,pageable).getContent();
+
+        return doctors.stream().map(this::mapToDocDto).collect(Collectors.toList());
     }
 
 
@@ -140,4 +163,16 @@ public class DoctorServiceImp implements DoctorService {
         return "Update doctor successfully";
     }
 
+    private DoctorDto mapToDocDto(Doctor doctor) {
+        return new DoctorDto(
+                doctor.getId(),
+                doctor.getFullName(),
+                doctor.getSpecialty().name(),
+                doctor.getDepartment(),
+                doctor.getUser().getEmail(),
+                doctor.getImageUrl(),
+                doctor.getFee(),
+                doctor.getDescription(),
+                doctor.getRole().name());
+    }
 }

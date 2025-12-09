@@ -33,7 +33,7 @@ public class Doctor {
     @Column(name = "role")
     private Role role;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "department_id")
     private Department department;
 
@@ -55,4 +55,8 @@ public class Doctor {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "doctor")
     private List<Appointment> appointments;
+
+    private Double fee;
+
+    private String description;
 }
