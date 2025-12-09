@@ -12,4 +12,5 @@ public interface DoctorRequestService {
 
     List<DoctorRequestDto> getAllDoctorRequests();
 
+
 }

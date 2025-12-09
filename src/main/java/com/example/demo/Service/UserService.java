@@ -1,4 +1,5 @@
-package com.example.demo.Repository;
+package com.example.demo.Service;
+
 
 import com.example.demo.Dto.UserDto;
 import com.example.demo.Model.User;
@@ -11,4 +12,5 @@ public interface UserService {
     Map<String, Object> authenticateUser(UserDto userDto);
 
 
+    String sendResetPasswordEmail(String email);
 }

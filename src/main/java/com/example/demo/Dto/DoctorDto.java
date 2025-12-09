@@ -1,6 +1,7 @@
 package com.example.demo.Dto;
 
-import com.example.demo.Model.Department;
+
+import com.CareBook.MediSched.Model.Department;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,8 @@ public class DoctorDto {
     private String specialty;
 
     private Department department;
+    
+    private String departmentName;
 
     private String email;
 
@@ -29,5 +32,7 @@ public class DoctorDto {
     private String description;
 
     private String role;
+
+    private Double rating;
 
 }

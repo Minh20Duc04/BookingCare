@@ -51,4 +51,5 @@ public class DoctorRequest {
     private Double fee;
 
     private String description;
+
 }

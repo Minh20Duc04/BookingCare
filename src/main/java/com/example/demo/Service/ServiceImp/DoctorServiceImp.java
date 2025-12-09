@@ -1,11 +1,11 @@
 package com.example.demo.Service.ServiceImp;
 
-import com.example.demo.Dto.DoctorDecisionDto;
-import com.example.demo.Dto.DoctorDto;
-import com.example.demo.Dto.DoctorRequestDto;
-import com.example.demo.Model.*;
-import com.example.demo.Repository.*;
-import com.example.demo.Service.DoctorService;
+import com.CareBook.MediSched.Dto.DoctorDecisionDto;
+import com.CareBook.MediSched.Dto.DoctorDto;
+import com.CareBook.MediSched.Dto.DoctorRequestDto;
+import com.CareBook.MediSched.Model.*;
+import com.CareBook.MediSched.Repository.*;
+import com.CareBook.MediSched.Service.DoctorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 @Service
 @RequiredArgsConstructor
 
@@ -27,8 +26,10 @@ public class DoctorServiceImp implements DoctorService {
     private final DoctorRepository doctorRepository;
     private final DoctorRequestRepository doctorRequestRepository;
     private final ScheduleRepository scheduleRepository;
-    private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
+    private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
+
 
     @Override
     public String decideDoctorRequest(DoctorDecisionDto decisionDto){
@@ -58,7 +59,6 @@ public class DoctorServiceImp implements DoctorService {
                     .build();
             doctorRepository.save(createDoctor);
 
-
             doctorRequest.setStatus(Status.APPROVED);
             doctorRequestRepository.save(doctorRequest);
 
@@ -79,35 +79,12 @@ public class DoctorServiceImp implements DoctorService {
         else if(seekStatus == Status.PENDING){
             return "Doctor request is still pending";
         }
-        else {
+        else{
             doctorRequest.setStatus(Status.REJECTED);
             doctorRequestRepository.save(doctorRequest);
             return "Doctor request rejected.";
         }
     }
-
-    @Override
-    public List<DoctorDto> findByDoctorNameOrSpecialty(String name, String specialty, String page) {
-        if(name != null && !name.trim().toLowerCase().isEmpty()){
-            name = name.trim().toLowerCase();
-        }else {
-            name = null;
-        }
-        if(specialty != null && !specialty.trim().isEmpty()){
-            try {
-                Specialty.valueOf(specialty);
-                specialty = specialty.trim().toUpperCase();
-            }catch (IllegalArgumentException e){
-                specialty = null;
-            }
-        }
-        Pageable pageable = PageRequest.of(Integer.parseInt(page), 10, Sort.by("fullName").ascending());
-
-        List<Doctor> doctors = doctorRepository.searchDoctors(name,specialty,pageable).getContent();
-
-        return doctors.stream().map(this::mapToDocDto).collect(Collectors.toList());
-    }
-
 
     @Override
     public String updateDoctor(Long doctorId, DoctorRequestDto doctorRequestDto){
@@ -163,16 +140,59 @@ public class DoctorServiceImp implements DoctorService {
         return "Update doctor successfully";
     }
 
-    private DoctorDto mapToDocDto(Doctor doctor) {
-        return new DoctorDto(
-                doctor.getId(),
-                doctor.getFullName(),
-                doctor.getSpecialty().name(),
-                doctor.getDepartment(),
-                doctor.getUser().getEmail(),
-                doctor.getImageUrl(),
-                doctor.getFee(),
-                doctor.getDescription(),
-                doctor.getRole().name());
+    @Override
+    public List<DoctorDto> findByDoctorNameOrSpecialty(String name, String specialty, String page) {
+        if(name != null && !name.trim().toLowerCase().isEmpty()){
+            name = name.trim().toLowerCase();
+        }else {
+            name = null;
+        }
+        if(specialty != null && !specialty.trim().isEmpty()){
+            try {
+                Specialty.valueOf(specialty);
+                specialty = specialty.trim().toUpperCase();
+            }catch (IllegalArgumentException e){
+                specialty = null;
+            }
+        }
+        Pageable pageable = PageRequest.of(Integer.parseInt(page), 10, Sort.by("fullName").ascending());
+
+        List<Doctor> doctors = doctorRepository.searchDoctors(name,specialty,pageable).getContent();
+
+        return doctors.stream().map(this::mapToDocDto).collect(Collectors.toList());
     }
+
+    @Override
+    public DoctorDto getDoctorProfile(User user) {
+        return mapToDocDto(user.getDoctor());
+    }
+
+    @Override
+    public DoctorDto getDoctorById(Long id) {
+        return mapToDocDto(doctorRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("Doctor not found")));
+    }
+
+    @Override
+    public List<DoctorDto> getAllDoctor() {
+        List<Doctor> docsDB = doctorRepository.findAll();
+        return docsDB.stream().map(this::mapToDocDto).collect(Collectors.toList());
+    }
+
+    private DoctorDto mapToDocDto(Doctor doctor) {
+        DoctorDto dto = new DoctorDto();
+        dto.setId(doctor.getId());
+        dto.setFullName(doctor.getFullName());
+        dto.setSpecialty(doctor.getSpecialty().name());
+        dto.setDepartment(doctor.getDepartment());
+        dto.setDepartmentName(doctor.getDepartment() != null ? doctor.getDepartment().getName() : null);
+        dto.setEmail(doctor.getUser().getEmail());
+        dto.setImageUrl(doctor.getImageUrl());
+        dto.setFee(doctor.getFee());
+        dto.setDescription(doctor.getDescription());
+        dto.setRole(doctor.getRole().name());
+        Double avgRating = reviewRepository.findAverageRatingByDoctorId(doctor.getId());
+        dto.setRating(avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0);
+        return dto;
+    }
+
 }

@@ -1,5 +1,7 @@
 package com.example.demo.Service.ServiceImp;
 
+
+import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.demo.Dto.DoctorRequestDto;
 import com.example.demo.Model.*;
@@ -9,12 +11,12 @@ import com.example.demo.Service.DoctorRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import com.cloudinary.Cloudinary;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,8 +27,6 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
     private final DoctorRequestRepository doctorRequestRepository;
     private final DepartmentRepository departmentRepository;
     private final Cloudinary cloudinary;
-
-
 
 
     @Override
@@ -83,10 +83,10 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
             throw new IllegalArgumentException("Invalid specialty: " + doctorRequestDto.getSpecialty());
         }
 
-        for(String day : doctorRequestDto.getDaysOfWeek()) {
+        for(String day : doctorRequestDto.getDaysOfWeek()){
             try {
                 DayOfWeek.valueOf(day.toUpperCase());
-            } catch (IllegalArgumentException e) {
+            }catch (IllegalArgumentException e){
                 throw new IllegalArgumentException("Invalid day of week: " + day);
             }
         }
@@ -95,14 +95,14 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
             throw new IllegalArgumentException("Start time and end time cannot be null");
         }
 
-        if(doctorRequestDto.getStartTime().isAfter(doctorRequestDto.getEndTime())) {
+        if(doctorRequestDto.getStartTime().isAfter(doctorRequestDto.getEndTime())){
             throw new IllegalArgumentException("Start time must be before end time");
         }
+
         if(doctorRequestDto.getFee().equals(null)  || doctorRequestDto.getFee() <= 100000){
             throw new IllegalArgumentException("Invalid fee");
         }
     }
-
 
     private DoctorRequestDto docRequestToDto(DoctorRequest doctorRequest){
         return new DoctorRequestDto(doctorRequest.getId(), doctorRequest.getStatus().name(), doctorRequest.getSpecialty().name(), doctorRequest.getDaysOfWeek().stream().map(DayOfWeek::name).collect(Collectors.toList()), doctorRequest.getDepartment().getId(), doctorRequest.getStartTime(), doctorRequest.getEndTime(), doctorRequest.getFee(), doctorRequest.getDescription());
@@ -116,7 +116,5 @@ public class DoctorRequestServiceImp implements DoctorRequestService {
             throw new RuntimeException("Lỗi khi upload file: " + e.getMessage());
         }
     }
-
-
 
 }

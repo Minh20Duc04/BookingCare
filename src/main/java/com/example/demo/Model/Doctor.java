@@ -1,5 +1,4 @@
 package com.example.demo.Model;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -59,4 +58,9 @@ public class Doctor {
     private Double fee;
 
     private String description;
+
+    @OneToMany(mappedBy = "doctor",cascade = CascadeType.ALL)
+    private List<Review> reviews;
+
+
 }

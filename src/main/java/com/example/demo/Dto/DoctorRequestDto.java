@@ -10,7 +10,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class DoctorRequestDto {
 
     private Long id;
@@ -30,5 +29,6 @@ public class DoctorRequestDto {
     private Double fee;
 
     private String description;
+
 
 }

@@ -3,7 +3,6 @@ package com.example.demo.Model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -13,21 +12,27 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 @Builder
-@Table(name = "medical_record")
-public class MedicalRecord {
+@Table(name = "review")
+public class Review {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String diagnosis;
+    private String comment;
 
-    private String treatmentPlan;
-
-    private String prescription;
+    private Integer rating; // số sao từ 1 -> 5
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient_id")
+    private Patient patient;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "doctor_id")
+    private Doctor doctor;
+
+
 }

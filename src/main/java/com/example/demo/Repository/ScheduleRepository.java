@@ -10,6 +10,6 @@ import java.time.DayOfWeek;
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
-    Schedule findByDoctorAndDaysOfWeekContaining(Doctor docDB, DayOfWeek dayOfWeek);
 
+    Schedule findByDoctorAndDaysOfWeekContaining(Doctor docDB, DayOfWeek dayOfWeek);
 }

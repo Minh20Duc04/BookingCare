@@ -15,8 +15,7 @@ import java.util.List;
 @Setter
 @Getter
 @Builder
-@Table(name = "doctor")
-
+@Table(name = "patient")
 public class Patient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,13 +33,13 @@ public class Patient {
 
     private String username;
 
-    private String address;
-
-    private Date dob;
-
     @Enumerated(value = EnumType.STRING)
     @Column(name = "role")
     private Role role;
+
+    private String address;
+
+    private Date dob;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -54,4 +53,8 @@ public class Patient {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "patient")
     private List<Appointment> appointments;
+
+    @OneToMany(mappedBy = "patient",cascade = CascadeType.ALL)
+    private List<Review> reviews;
+
 }

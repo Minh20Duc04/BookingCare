@@ -8,10 +8,10 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 
 @Configuration
 @EnableWebSecurity
@@ -20,33 +20,68 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuthenticationProvider authenticationProvider;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception
-    {
-        httpSecurity.csrf(AbstractHttpConfigurer::disable)
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(request-> request
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth
+
+                        // ko cần role
                         .requestMatchers(
                                 "/user/register",
                                 "/user/login",
-                                "/doctor/search"
+                                "/user/forgot-password",
+                                "/doctor/search",
+                                "/doctor/**",
+                                "/department/get-all",
+                                "/appointment/available-slots",
+                                "/review/get-all/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/bot/chat",
+                                "/doctor/get-all"
                         ).permitAll()
+
+                        // role USER
                         .requestMatchers("/doctor/request").hasRole("USER")
+
+                        // role ADMIN
                         .requestMatchers(
                                 "/doctor/get-all-requests",
                                 "/doctor/decide-request",
                                 "/doctor/update/**",
                                 "/department/createDepartment",
-                                "/appointment/available-slots"
+                                "/patient/delete/**"
                         ).hasRole("ADMIN")
+
+                        // role PATIENT
+                        .requestMatchers(
+                                "/review/evaluate",
+                                "/patient/me",
+                                "/appointment/me"
+                        ).hasRole("PATIENT")
+
+                        // role DOCTOR
+                        .requestMatchers("/doctor/me",
+                                "/appointment/getBy-doctor" //getAllApointmentsByDoc
+                        ).hasRole("DOCTOR")
+
+                        // chung role
+                        .requestMatchers("/patient/update/**", "/appointment/update/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR")
+                        .requestMatchers("/appointment/book").hasAnyRole("USER", "PATIENT")
+                        .requestMatchers("/patient/get-all").hasAnyRole("ADMIN", "DOCTOR")
+
                         .anyRequest().authenticated()
-                )
-                .sessionManagement(manager-> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        return httpSecurity.build();
+                );
+
+        return http.build();
     }
-
-
-
 }

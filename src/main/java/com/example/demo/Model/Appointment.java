@@ -14,7 +14,6 @@ import java.time.LocalTime;
 @Getter
 @Builder
 @Table(name = "appointment")
-
 public class Appointment {
 
     @Id
@@ -28,15 +27,20 @@ public class Appointment {
     @Enumerated(value = EnumType.STRING)
     private Status status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "patient_id")
     @JsonIgnore
     private Patient patient;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "doctor_id")
     @JsonIgnore
     private Doctor doctor;
 
     private String note;
+    
+    private String reason;
+
+    @Enumerated(value = EnumType.STRING)
+    private PaymentMethod paymentMethod;
 }

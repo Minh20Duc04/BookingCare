@@ -1,41 +1,76 @@
 package com.example.demo.Controller;
 
-import com.example.demo.Dto.AppointmentDto;
-import com.example.demo.Model.User;
-import com.example.demo.Service.AppointmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-@RestController
-@RequestMapping("/appointment")
-@RequiredArgsConstructor
-public class AppointmentController {
+    @RestController
+    @RequestMapping("/appointment")
+    @RequiredArgsConstructor
+    public class AppointmentController {
 
-    private final AppointmentService appointmentService;
+        private final AppointmentService appointmentService;
 
-    @GetMapping("/available-slots")
-    public ResponseEntity<List<LocalTime>> getAvailableSlots(@RequestParam Long doctorId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(appointmentService.getAvailableSlots(doctorId, date));
+        @GetMapping("/available-slots")
+        public ResponseEntity<List<LocalTime>> getAvailableSlots(@RequestParam Long doctorId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            return ResponseEntity.ok(appointmentService.getAvailableSlots(doctorId, date));
+        }
+
+        @PostMapping("/book")
+        public ResponseEntity<?> bookAppointment(@RequestBody AppointmentDto appointmentDto, Authentication authentication) {
+            User user = (User) authentication.getPrincipal();
+            AppointmentDto saved = appointmentService.bookAppointment(appointmentDto, user);
+
+            // Nếu là thanh toán ONLINE, trả về paymentUrl
+            if (saved.getPaymentMethod() != null && saved.getPaymentMethod().name().equalsIgnoreCase("ONLINE")) {
+                // Tạo lại link VNPAY (hoặc lấy từ service nếu đã tạo)
+                String paymentUrl = appointmentService.createVnPayUrl(
+                        appointmentService.getAppointmentById(saved.getId()) // Bạn cần có hàm này hoặc lấy Appointment từ repo
+                );
+                Map<String, Object> response = new HashMap<>();
+                response.put("appointment", saved);
+                response.put("paymentUrl", paymentUrl);
+                return ResponseEntity.ok(response);
+            }
+
+            // Nếu là thanh toán tiền mặt, chỉ trả về appointment
+            return ResponseEntity.ok(saved);
+        }
+
+        @PutMapping("/update/{appointmentId}")
+        public ResponseEntity<String> updateAppointment(
+            @PathVariable Long appointmentId, 
+            Authentication authentication, 
+            @RequestParam String status,
+            @RequestParam(required = false) String note){
+            User user = (User) authentication.getPrincipal();
+            return ResponseEntity.ok(appointmentService.updateAppointment(appointmentId, user, status, note));
+        }
+
+        @GetMapping("/getBy-doctor")
+        public ResponseEntity<List<AppointmentDto>> getAllByDoc(Authentication authentication) {
+            User user = (User) authentication.getPrincipal();
+            return ResponseEntity.ok(appointmentService.getAllByDoc(user));
+        }
+
+        @GetMapping("/me")
+        public ResponseEntity<List<AppointmentDto>> getMyAppointments(Authentication authentication) {
+            User user = (User) authentication.getPrincipal();
+            return ResponseEntity.ok(appointmentService.getAppointmentsByUser(user));
+        }
+
+        @GetMapping("/get-all")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<List<AppointmentDto>> getAllAppointments() {
+            return ResponseEntity.ok(appointmentService.getAllAppointments());
+        }
     }
-
-    @PostMapping("/book") //cho patient, user
-    public ResponseEntity<AppointmentDto> bookAppointment(@RequestBody AppointmentDto appointmentDto, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(appointmentService.bookAppointment(appointmentDto, user));
-    }
-
-
-}
-
-
-
-
-
-
